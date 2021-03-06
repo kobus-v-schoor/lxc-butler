@@ -48,4 +48,8 @@ def add_mount(name, host_path, dest_path):
     )
     container.save_config()
 
+    # restart the container
+    container.stop()
+    container.start()
+
     return True
