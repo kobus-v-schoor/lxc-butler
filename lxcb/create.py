@@ -2,6 +2,7 @@ import os
 import time
 import shlex
 import lxc
+import subprocess
 
 from ipaddress import IPv4Address
 
@@ -60,14 +61,25 @@ def create(name, distro, release, arch, ssh_config):
     def run_cmd(cmd):
         container.attach_wait(lxc.attach_run_command, shlex.split(cmd))
 
+    username = lxcb.info.username
+
     # update the container's repos
     run_cmd('apt update')
     # update the container's packages
     run_cmd('apt upgrade -y')
     # install an ssh server and sudo
     run_cmd('apt install -y openssh-server sudo')
+    # set the timezone
+    run_cmd(f'ln -fs /usr/share/zoneinfo/{lxcb.info.timezone} /etc/localtime')
     # create the default user
-    run_cmd(f'/usr/sbin/useradd -mg sudo -s /bin/bash {lxcb.info.username}')
+    run_cmd(f'/usr/sbin/useradd -mG sudo -s /bin/bash {username}')
+
+    # set the default user's password
+    def set_password():
+        subprocess.run(['/usr/bin/passwd', username],
+                       input=f'{username}\n{username}\n'.encode())
+
+    container.attach_wait(set_password)
 
     # read this machine's public ssh key
     with open(os.path.join(lxcb.info.home, '.ssh/id_rsa.pub'), 'r') as f:

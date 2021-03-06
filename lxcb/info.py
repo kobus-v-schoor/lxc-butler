@@ -1,9 +1,10 @@
-from os.path import expanduser, isfile
+from os import readlink
+from os.path import expanduser, isfile, relpath
 from getpass import getuser
 
-# the user's username
 username = getuser()
 home = expanduser('~')
+timezone = relpath(readlink('/etc/localtime'), '/usr/share/zoneinfo')
 
 # try and figure out the distro name and release
 # TODO add methods for other distros
