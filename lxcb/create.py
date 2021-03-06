@@ -104,8 +104,4 @@ def create(name, distro, release, arch, ssh_config):
     with open(ssh_config, 'a') as f:
         f.write(f'\nHost {name}\n  Hostname {ip}\n')
 
-    # restart the container
-    container.stop()
-    container.start()
-
     return True

@@ -50,6 +50,7 @@ def add_mount(name, host_path, dest_path):
 
     # restart the container
     container.stop()
+    container.wait('STOPPED', 3)
     container.start()
 
     return True
