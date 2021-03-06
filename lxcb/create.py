@@ -1,15 +1,18 @@
-import logging
+import os
+import time
+import shlex
 import lxc
 
 from ipaddress import IPv4Address
+
+import lxcb.info
 
 
 # returns the next available IP address
 def _next_ip():
     ips = []
 
-    for name in lxc.list_containers():
-        container = lxc.Container(name)
+    for container in lxc.list_containers(as_object=True):
         # get the ip as set in the config
         ip = container.get_config_item('lxc.net.0.ipv4.address')
 
@@ -25,12 +28,12 @@ def _next_ip():
 
 
 # create a new container
-def create(name, distro, release, arch):
+def create(name, distro, release, arch, ssh_config):
     container = lxc.Container(name)
 
     # check if the container already exists
     if container.defined:
-        logging.error('A container with the name "{name}" is already defined')
+        print(f'A container with the name "{name}" is already defined')
         return False
 
     # find the next available IP address
@@ -46,5 +49,47 @@ def create(name, distro, release, arch):
     # set the container's ip address
     container.append_config_item('lxc.net.0.ipv4.address', str(ip))
     container.save_config()
+
+    # start the container
+    container.start()
+    container.wait('RUNNING', 3)
+
+    # wait for network connectivity
+    time.sleep(5)
+
+    def run_cmd(cmd):
+        container.attach_wait(lxc.attach_run_command, shlex.split(cmd))
+
+    # update the container's repos
+    run_cmd('apt update')
+    # update the container's packages
+    run_cmd('apt upgrade -y')
+    # install an ssh server and sudo
+    run_cmd('apt install -y openssh-server sudo')
+    # create the default user
+    run_cmd(f'/usr/sbin/useradd -mg sudo -s /bin/bash {lxcb.info.username}')
+
+    # read this machine's public ssh key
+    with open(os.path.join(lxcb.info.home, '.ssh/id_rsa.pub'), 'r') as f:
+        public_key = f.read()
+
+    # add the host's ssh key to the container
+    def add_key():
+        # home directory of default user on container
+        container_home = os.path.expanduser(f'~{lxcb.info.username}')
+        # ssh dir
+        ssh_dir = os.path.join(container_home, '.ssh')
+        # create the ssh dir
+        if not os.path.isdir(ssh_dir):
+            os.makedirs(ssh_dir)
+        # add the key
+        with open(os.path.join(ssh_dir, 'authorized_keys'), 'w') as f:
+            f.write(public_key)
+
+    container.attach_wait(add_key)
+
+    # add the container's ip address to the host's ssh config
+    with open(ssh_config, 'a') as f:
+        f.write(f'\nHost {name}\n  Hostname {ip}\n')
 
     return True
