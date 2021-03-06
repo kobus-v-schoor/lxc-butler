@@ -14,7 +14,9 @@ if __name__ == '__main__':
 
 
 def main():
-    pass
+    import lxcb.create
+    from lxcb import info
+    lxcb.create.create('test', info.distro, info.release, info.arch)
 
 
 if __name__ == '__main__':
