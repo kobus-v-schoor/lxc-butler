@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+import sys
 import site
 
 
@@ -14,3 +15,7 @@ if __name__ == '__main__':
 
 def main():
     pass
+
+
+if __name__ == '__main__':
+    sys.exit(main())
