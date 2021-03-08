@@ -67,8 +67,8 @@ def create(name, distro, release, arch, ssh_config):
     run_cmd('apt update')
     # update the container's packages
     run_cmd('apt upgrade -y')
-    # install an ssh server and sudo
-    run_cmd('apt install -y openssh-server sudo')
+    # install an ssh server, sudo and bash-completion
+    run_cmd('apt install -y openssh-server sudo bash-completion')
     # set the timezone
     run_cmd(f'ln -fs /usr/share/zoneinfo/{lxcb.info.timezone} /etc/localtime')
     # create the default user
