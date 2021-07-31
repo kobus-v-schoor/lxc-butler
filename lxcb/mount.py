@@ -32,6 +32,9 @@ def add_mount(name, host_path, dest_path):
         print(f'{host_path} is already mounted in config')
         return False
 
+    # stop the container first
+    container.stop()
+
     # create the dest dir on the container
     dest_dir = os.path.join(rootfs, dest_path)
     if not os.path.isdir(dest_dir):
@@ -47,10 +50,5 @@ def add_mount(name, host_path, dest_path):
         f'{host_path} {dest_path} none bind 0 0',
     )
     container.save_config()
-
-    # restart the container
-    container.stop()
-    container.wait('STOPPED', 3)
-    container.start()
 
     return True
