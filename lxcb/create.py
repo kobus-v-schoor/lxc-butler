@@ -3,6 +3,7 @@ import time
 import shlex
 import lxc
 import subprocess
+import shutil
 
 from ipaddress import IPv4Address
 
@@ -22,7 +23,7 @@ def _next_ip():
 
     if not ips:
         # return a default first address
-        return IPv4Address('10.0.3.2')
+        return IPv4Address('192.168.122.2')
 
     # returns the ip address just after the max current address
     return max(ips) + 1
@@ -56,7 +57,8 @@ def create(name, distro, release, arch, ssh_config):
     container.wait('RUNNING', 3)
 
     # wait for network connectivity
-    time.sleep(5)
+    print('Waiting for network connectivity')
+    time.sleep(15)
 
     def run_cmd(cmd):
         container.attach_wait(lxc.attach_run_command, shlex.split(cmd))
@@ -87,16 +89,23 @@ def create(name, distro, release, arch, ssh_config):
 
     # add the host's ssh key to the container
     def add_key():
-        # home directory of default user on container
-        container_home = os.path.expanduser(f'~{lxcb.info.username}')
+        # home directory of default user on container - not using expanduser
+        # (gave some issues with some setups)
+        container_home = f'/home/{username}'
         # ssh dir
         ssh_dir = os.path.join(container_home, '.ssh')
         # create the ssh dir
         if not os.path.isdir(ssh_dir):
             os.makedirs(ssh_dir)
         # add the key
-        with open(os.path.join(ssh_dir, 'authorized_keys'), 'w') as f:
+        authorized_keys = os.path.join(ssh_dir, 'authorized_keys')
+        with open(authorized_keys, 'w') as f:
             f.write(public_key)
+        # make sure the user owns the ssh dir and authorized keys file
+        # using direct id here because for some reason on some setups python
+        # doesn't correctly read the passwd entries
+        shutil.chown(ssh_dir, 1000, 1000)
+        shutil.chown(authorized_keys, 1000, 1000)
 
     container.attach_wait(add_key)
 
