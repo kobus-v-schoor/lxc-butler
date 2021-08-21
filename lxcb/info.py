@@ -3,7 +3,7 @@ from os.path import expanduser, relpath
 from getpass import getuser
 
 # package info
-__version__ = '0.0.3'
+__version__ = '0.0.5'
 __author__ = 'Kobus van Schoor'
 __author_email__ = 'v.schoor.kobus@gmail.com'
 __url__ = 'https://github.com/kobus-v-schoor/lxc-butler'
