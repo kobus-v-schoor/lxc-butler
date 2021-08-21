@@ -23,7 +23,7 @@ def _next_ip():
 
     if not ips:
         # return a default first address
-        return IPv4Address('192.168.122.2')
+        return IPv4Address('10.0.3.2')
 
     # returns the ip address just after the max current address
     return max(ips) + 1
@@ -40,6 +40,10 @@ def create(name, distro, release, arch, ssh_config):
 
     # find the next available IP address
     ip = _next_ip()
+
+    # update the pgp keyserver, since the one currently used by the download
+    # template doesn't work anymore
+    os.environ['DOWNLOAD_KEYSERVER'] = 'keys.openpgp.org'
 
     # create the container
     container.create('download', 0, {

@@ -16,5 +16,5 @@ timezone = relpath(readlink('/etc/localtime'), '/usr/share/zoneinfo')
 
 # set the default distro and release
 distro = 'debian'
-release = 'buster'
+release = 'bullseye'
 arch = 'amd64'
